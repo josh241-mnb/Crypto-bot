@@ -1,57 +1,46 @@
-
-import os
-import logging
-import requests
+import os, logging, requests, datetime
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 logging.basicConfig(level=logging.INFO)
 
-# Mapping que tu voulais
-SYMBOLS = {
-    "btc": "bitcoin", "bitcoin": "bitcoin",
-    "eth": "ethereum", "ethereum": "ethereum",
-    "gold": "pax-gold", "xau": "pax-gold", "xauusd": "pax-gold", "xaaud": "pax-gold", "paxg": "pax-gold",
-    "silver": "kinesis-silver", "xag": "kinesis-silver", "kag": "kinesis-silver",
-    "sol": "solana", "bnb": "bnb", "xrp": "ripple", "doge": "dogecoin"
+# --- DATABASE TEMP (en mémoire, après on mettra Postgres) ---
+users_db = {} # user_id: {"lang": "fr", "wins": 0, "dette": 0.0, "is_blocked": False}
+
+def get_user(user_id):
+    if user_id not in users_db:
+        users_db[user_id] = {"lang": "fr", "wins": 0, "dette": 0.0, "is_blocked": False, "free_hours_today": 0}
+    return users_db[user_id]
+
+# --- MESSAGES /START ---
+MESSAGES = {
+    "fr": "Salut ami 👋 Je vais t'accompagner dans ton aventure de trading pour te rendre rentable.\n\nJe peux:\n📊 /analyse - Te donner les 3 meilleurs marchés du moment avec 2 TP et 2 SL\n🔔 Activer les alertes de hausse/baisse\n💰 Version gratuite: 5h/jour\n\nChoisis ta langue: /lang fr ou /lang en",
+    "en": "Hi friend 👋 I will guide you through your trading journey to make you profitable.\n\nI can:\n📊 /analyse - Give you the 3 best markets to trade with 2 TP and 2 SL\n🔔 Enable pump/dump alerts\n💰 Free version: 5h/day\n\nChoose language: /lang fr or /lang en"
 }
 
-def get_price(coingecko_id):
-    try:
-        url = f"https://api.coingecko.com/api/v3/simple/price?ids={coingecko_id}&vs_currencies=usd&include_24hr_change=true"
-        r = requests.get(url, timeout=10).json()
-        data = r.get(coingecko_id)
-        if not data: return None
-        price = data.get("usd")
-        change = data.get("usd_24h_change", 0)
-        return price, change
-    except:
-        return None
-
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("👋 Josh AI est en ligne 24h/24 bro!\nTape: Btc, Eth, Gold, Silver")
+    user = get_user(update.effective_user.id)
+    lang = user["lang"]
+    await update.message.reply_text(MESSAGES[lang])
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text.lower().strip()
-    coin_id = SYMBOLS.get(text)
-    if not coin_id:
-        await update.message.reply_text(f"Je connais pas {text} bro, essaie BTC, ETH, GOLD, SILVER")
-        return
-    result = get_price(coin_id)
-    if not result:
-        await update.message.reply_text("API en pause bro, réessaie 10 sec")
-        return
-    price, change = result
-    emoji = "📈" if change >= 0 else "📉"
-    await update.message.reply_text(f"{emoji} {text.upper()} = ${price:,.2f}\n24h: {change:+.2f}%")
+async def lang_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = get_user(update.effective_user.id)
+    if context.args and context.args[0] in ["fr", "en"]:
+        user["lang"] = context.args[0]
+        await update.message.reply_text(f"Langue changée en {context.args[0]} ✅" if context.args[0]=="fr" else "Language changed to en ✅")
+    else:
+        await update.message.reply_text("Utilise: /lang fr ou /lang en")
+    await start(update, context)
+
+# Test simple pour garder le 200 OK
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(f"Reçu: {update.message.text} (tape /start pour commencer)")
 
 if __name__ == "__main__":
-    if not BOT_TOKEN:
-        print("BOT_TOKEN manquant!")
-        exit(1)
-    print("Josh AI démarre 24h/24...")
+    print("Josh Business Bot V5 Etape 1 - 24h/24")
     app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(CommandHandler("lang", lang_cmd))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
     app.run_polling()
