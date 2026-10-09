@@ -41,80 +41,59 @@ async def send_lang_choice(chat_id, context):
     await context.bot.send_message(chat_id=chat_id, text="🌍 Choisis ta langue / Choose language / Ti lege ti molengue:", reply_markup=InlineKeyboardMarkup(kb))
 
 def get_tuto_mois_annee(debt, uid, lang="fr"):
+    dette_fr = f"\n💵 DETTE = {debt}$ (WIN x 1,5$)\n👉 Tape DETTE\n" if debt>0 else ""
+    dette_en = f"\n💵 DEBT = {debt}$ (WIN x 1,5$)\n👉 Type DEBT\n" if debt>0 else ""
     if lang=="en":
-        return f"""💰 JOSH AI V6 PAYMENT TUTO 💰
+        return f"""💰 JOSH AI V6 💰
 
 📅 MONTH = 20$ USD
-✅ 24/7 unlimited for 30 days
-✅ All signals GOLD / EURUSD / GBPUSD
-✅ Support + EMA Strategy + SUPPORT/RESISTANCE
-👉 Type MONTH to pay monthly
+✅ 30 days unlimited 24/7
+👉 Type MONTH
 
-📅 YEAR = 80$ USD (BEST PRICE!)
-✅ 24/7 unlimited for 365 days
-✅ Save 160$ (instead of 240$)
-✅ VIP + Private group + SUPPORT/RESISTANCE
-👉 Type YEAR to pay yearly
-
-💵 DEBT / BALANCE = {debt}$ USD
-You owe {debt}$ (your WIN x 1,5$)
-👉 Type DEBT to pay and unlock
-
-📲 HOW TO PAY?
-1. Type MONTH or YEAR or DEBT
-2. Send your ID to boss: {uid}
-3. Boss unlocks in 5 min
-
-ID: {uid}
-Type /pay
-
-⏱️ FREE: 5h/day | PAID: 20$ month / 80$ year
-"""
-    else:
-        return f"""💰 TUTO PAIEMENT JOSH AI V6 💰
-
-📅 MOIS = 20$ USD
-✅ 24h/24 illimité pendant 30 jours
-✅ Tous les signaux GOLD / EURUSD / GBPUSD
-✅ Support + Stratégie EMA + SUPPORT/RESISTANCE
-👉 Tape MOIS pour payer mois
-
-📅 ANNEE = 80$ USD (MEILLEUR PRIX!)
-✅ 24h/24 illimité pendant 365 jours
-✅ Économise 160$ (au lieu de 240$)
-✅ VIP + Groupe privé + SUPPORT/RESISTANCE
-👉 Tape ANNEE pour payer année
-
-💵 DETTE / BILAN = {debt}$ USD
-Tu dois {debt}$ (tes WIN x 1,5$)
-👉 Tape DETTE pour payer ton bilan et débloquer
-
-📲 COMMENT PAYER?
-1. Tape MOIS ou ANNEE ou DETTE
-2. Envoie ton ID au patron: {uid}
-3. Patron débloque en 5 min
+📅 YEAR = 80$ USD (BEST!)
+✅ 365 days unlimited 24/7
+👉 Type YEAR
+{dette_en}
+📲 1. Type MONTH/YEAR/DEBT
+2. Send ID to boss: {uid}
+3. Boss unlocks 5 min
 
 ID: {uid}
 Tape /pay
 
-⏱️ GRATUIT: 5h/jour | PAYANT: 20$ mois / 80$ année
+FREE: 5h/day | PAID: 20$ month / 80$ year
+"""
+    else:
+        return f"""💰 JOSH AI V6 💰
+
+📅 MOIS = 20$ USD
+✅ 30 jours illimité 24h/24
+👉 Tape MOIS
+
+📅 ANNEE = 80$ USD (MEILLEUR!)
+✅ 365 jours illimité 24h/24
+👉 Tape ANNEE
+{dette_fr}
+📲 1. Tape MOIS/ANNEE/DETTE
+2. Envoie ID au patron: {uid}
+3. Patron débloque 5 min
+
+ID: {uid}
+Tape /pay
+
+GRATUIT: 5h/jour | PAYANT: 20$ mois / 80$ année
 """
 
 async def send_top_markets(context, chat_id, user_prices, free_mins=None, lang="fr"):
     if lang=="en":
-        msg = f"🔥 JOSH AI V6 - TOP MT5 MARKETS 🔥\nMT5 Real | {datetime.now().strftime('%d/%m %H:%M')} GMT\n\nHere are 3 good markets to trade now:\n\n"
-        for sym, price in user_prices.items():
-            fmt = f"{price:.2f}" if sym=="GOLD" else f"{price:.5f}"
-            msg += f"🔹 {sym}\nPrice: {fmt} | Trend: BEARISH 🔴\nScore: 91%\n\n"
-        msg += f"Which one? Type: gold / eurusd / gbpusd or 1/2/3\n\nFREE: 5h/day | PAID: 20$ month / 80$ year"
+        msg = f"🔥 JOSH AI V6 - TOP MT5 🔥\n{datetime.now().strftime('%d/%m %H:%M')} GMT\n\nHere are 3 good markets now:\n\n"
     else:
-        msg = f"🔥 JOSH AI V6 - TOP MARCHES MT5 🔥\nMT5 Réel | {datetime.now().strftime('%d/%m %H:%M')} GMT\n\nVoici les 3 bons marchés où tu peux trader maintenant:\n\n"
-        for sym, price in user_prices.items():
-            fmt = f"{price:.2f}" if sym=="GOLD" else f"{price:.5f}"
-            msg += f"🔹 {sym}\nPrix: {fmt} | Tendance: BAISSIER 🔴\nScore: 91%\n\n"
-        msg += f"Lequel veux-tu trader?\nTape: gold ou eurusd ou gbpusd\nOu tape 1 / 2 / 3\n\nGRATUIT: 5h/jour | PAYANT: 20$ mois / 80$ année"
-    if free_mins and free_mins!=999:
-        msg += f"\n⏱️ Reste {free_mins} min gratuit" if lang=="fr" else f"\n⏱️ {free_mins} min left free"
+        msg = f"🔥 JOSH AI V6 - TOP MARCHES MT5 🔥\n{datetime.now().strftime('%d/%m %H:%M')} GMT\n\nVoici les 3 bons marchés maintenant:\n\n"
+    for sym, price in user_prices.items():
+        fmt = f"{price:.2f}" if sym=="GOLD" else f"{price:.5f}"
+        msg += f"🔹 {sym} Prix: {fmt} | BAISSIER 🔴 91%\n\n" if lang=="fr" else f"🔹 {sym} Price: {fmt} | BEARISH 🔴 91%\n\n"
+    msg += "Tape: gold / eurusd / gbpusd ou 1/2/3\n" if lang=="fr" else "Type: gold / eurusd / gbpusd or 1/2/3\n"
+    if free_mins and free_mins!=999: msg += f"\n⏱️ {free_mins} min gratuit" if lang=="fr" else f"\n⏱️ {free_mins} min left"
     kb = [[InlineKeyboardButton("🥇 GOLD", callback_data="GOLD"), InlineKeyboardButton("💶 EURUSD", callback_data="EURUSD"), InlineKeyboardButton("💷 GBPUSD", callback_data="GBPUSD")]]
     await context.bot.send_message(chat_id=chat_id, text=msg, reply_markup=InlineKeyboardMarkup(kb))
 
@@ -125,59 +104,48 @@ async def send_detailed_analysis(context, chat_id, symbol_key, price, lang="fr")
     entry = price; tp1 = price*0.99968; tp2 = price*0.9989; tp3 = price*0.995; sl1 = price*1.0058
     def fmt(p): return f"{p:.2f}" if is_gold else f"{p:.5f}"
     if lang=="en":
-        txt = f"🔥 DETAILED ANALYSIS: {symbol_key} 🔥\nMT5 / {datetime.now().strftime('%d/%m %H:%M')} GMT\n\n📊 SIGNAL: SELL 🔴\n💵 ENTRY: {fmt(entry)}\n🎯 TP1: {fmt(tp1)}\n🎯 TP2: {fmt(tp2)}\n🎯 TP3: {fmt(tp3)} (Runner)\n🛑 SL1: {fmt(sl1)}\n📍 SUPPORT: {fmt(sup)} 🔵\n📍 RESISTANCE: {fmt(res)} 🔴\n\n📈 STRATEGY:\nScalping EMA 50 + EMA 200\nWait H1 confirmation\nSecure 50% & let run TP2/TP3\n\nOpen MT5 -> {symbol_key}\nSet lot directly!"
+        txt = f"🔥 {symbol_key} 🔥\nMT5 / {datetime.now().strftime('%d/%m %H:%M')} GMT\n\n📊 SELL 🔴\n💵 ENTRY: {fmt(entry)}\n🎯 TP1: {fmt(tp1)}\n🎯 TP2: {fmt(tp2)}\n🎯 TP3: {fmt(tp3)}\n🛑 SL: {fmt(sl1)}\n📍 SUPPORT: {fmt(sup)} 🔵\n📍 RESISTANCE: {fmt(res)} 🔴\n\n📈 EMA 50+200 | H1 confirmation\nOpen MT5 -> {symbol_key}"
     else:
-        txt = f"🔥 ANALYSE DETAILLEE: {symbol_key} 🔥\nMT5 / {datetime.now().strftime('%d/%m %H:%M')} GMT\n\n📊 SIGNAL: SELL 🔴 VENTE\n💵 ENTREE: {fmt(entry)}\n🎯 TP1: {fmt(tp1)}\n🎯 TP2: {fmt(tp2)}\n🎯 TP3: {fmt(tp3)} (Runner)\n🛑 SL1: {fmt(sl1)}\n📍 SUPPORT: {fmt(sup)} 🔵\n📍 RESISTANCE: {fmt(res)} 🔴\n\n📈 STRATEGIE ADOPTEE:\nScalping EMA 50 + EMA 200\nAttends confirmation bougie H1\nTF M15 + TF H1 + TF M1 = 1100\nSécurise 50% & laisse courir TP2/TP3\nSécurité 50% & 1900\n\nOuvre MT5 -> {symbol_key}\nMets lot direct!"
-    kb = [[InlineKeyboardButton("✅ WIN Gagné / Won", callback_data="WIN"), InlineKeyboardButton("❌ LOSS Perdu / Lost", callback_data="LOSS")]]
+        txt = f"🔥 ANALYSE {symbol_key} 🔥\nMT5 / {datetime.now().strftime('%d/%m %H:%M')} GMT\n\n📊 SELL 🔴 VENTE\n💵 ENTREE: {fmt(entry)}\n🎯 TP1: {fmt(tp1)}\n🎯 TP2: {fmt(tp2)}\n🎯 TP3: {fmt(tp3)}\n🛑 SL: {fmt(sl1)}\n📍 SUPPORT: {fmt(sup)} 🔵\n📍 RESISTANCE: {fmt(res)} 🔴\n\n📈 EMA 50+200 | Attends H1\nTF M15+H1+M1=1100\nOuvre MT5 -> {symbol_key}"
+    kb = [[InlineKeyboardButton("✅ WIN", callback_data="WIN"), InlineKeyboardButton("❌ LOSS", callback_data="LOSS")]]
     await context.bot.send_message(chat_id=chat_id, text=txt, reply_markup=InlineKeyboardMarkup(kb))
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    q = update.callback_query
-    await q.answer()
+    q = update.callback_query; await q.answer()
     u = get_user(q.from_user.id, q.message.chat_id, q.from_user.first_name)
     d = q.data
     if d.startswith("lang_"):
         lang = d.split("_")[1]; u["lang"]=lang
         await notify_admin(context, f"🌍 {u['name']} langue {lang} ID:{q.from_user.id}")
-        await q.message.reply_text(f"✅ Langue {lang} ok!" if lang=="fr" else f"✅ Language {lang} ok!")
+        await q.message.reply_text(f"✅ {lang} ok!")
         prices=get_mt5_prices(); u["last_prices"]=prices
         allowed, mins = check_free(u)
-        await send_top_markets(context, q.message.chat_id, prices, mins, lang)
-        return
+        await send_top_markets(context, q.message.chat_id, prices, mins, lang); return
     if d in ["GOLD","EURUSD","GBPUSD"]:
         price = u.get("last_prices",{}).get(d, 4191 if d=="GOLD" else 1.12)
-        await notify_admin(context, f"👆 {u['name']} a cliqué {d} ID:{q.from_user.id} Bilan:{u['debt']}$")
-        await send_detailed_analysis(context, q.message.chat_id, d, price, u.get("lang","fr"))
-        return
+        await notify_admin(context, f"👆 {u['name']} {d} ID:{q.from_user.id} Bilan:{u['debt']}$")
+        await send_detailed_analysis(context, q.message.chat_id, d, price, u.get("lang","fr")); return
     if d=="WIN":
         u["wins"]+=1; u["debt"]=round(u["debt"]+1.5,2)
-        lang=u.get("lang","fr")
-        if lang=="en":
-            await q.message.reply_text(f"✅ You won!\n\nMy balance to pay: {u['debt']}$\n{u['wins']} WIN / {u['losses']} LOSS")
-        else:
-            await q.message.reply_text(f"✅ Tu as gagné!\n\nMon bilan à payer: {u['debt']}$\n{u['wins']} WIN / {u['losses']} LOSS")
-        await notify_admin(context, f"🔔 {u['name']} WIN ID:{q.from_user.id} DOIT: {u['debt']}$")
+        await q.message.reply_text(f"✅ WIN! Bilan: {u['debt']}$ | {u['wins']}W/{u['losses']}L")
+        await notify_admin(context, f"🔔 WIN {u['name']} ID:{q.from_user.id} DOIT:{u['debt']}$")
         if u["debt"]>=7.5:
             u["debt_block"]=True; u["blocked"]=True
-            await notify_admin(context, f"🚨 BLOQUÉ 7,5$ {u['name']} ID:{q.from_user.id}")
-            if lang=="en":
-                await context.bot.send_message(chat_id=q.message.chat_id, text=f"⛔ BOT STOPPED AUTOMATICALLY ⛔\n\nMy balance to pay: {u['debt']}$ ({u['wins']} WIN x 1,5$)\nType /pay and send your ID to boss to pay my BALANCE\n\n🚫 BLOCKED BALANCE 7.5$ (5 WIN x 1,5$)\n/pay + send ID to boss\nID: {q.from_user.id}\n\nMY BALANCE PAID! Bot unlocked! You can redo 0 WIN\n\nToo bad but don't give up!\nDon't give up, next one will be winner! 😊")
-            else:
-                await context.bot.send_message(chat_id=q.message.chat_id, text=f"⛔ BOT ARRETE AUTOMATIQUEMENT ⛔\n\nMon bilan à payer: {u['debt']}$ ({u['wins']} WIN x 1,5$)\nTape /pay et envoie ton ID au patron pour payer mon BILAN\n\n🚫 BLOQUE BILAN 7.5$ (5 WIN x 1,5$)\n/pay + envoie ID au patron pour payer mon\nID: {q.from_user.id}\n\nMON BILAN PAYE! Bot débloqué! Tu peux refaire 0 WIN\n\nDommage mais ne pas abandonne!\nNe lâche pas, le prochain sera gagnant! 😊")
+            lang=u.get("lang","fr")
+            txt = f"⛔ BOT STOPPED ⛔\nBalance: {u['debt']}$ (5 WIN)\n/pay + ID {q.from_user.id}\n\nMY BALANCE PAID! Bot unlocked! 0 WIN\n\nToo bad but don't give up! Next will win! 😊" if lang=="en" else f"⛔ BOT ARRETE ⛔\nBilan: {u['debt']}$ (5 WIN x 1,5$)\n/pay + ID {q.from_user.id}\n\nMON BILAN PAYE! Bot débloqué! 0 WIN\n\nDommage mais ne pas abandonne! Ne lâche pas, le prochain sera gagnant! 😊"
+            await context.bot.send_message(chat_id=q.message.chat_id, text=txt)
+            await notify_admin(context, f"🚨 BLOQUE 7,5$ {u['name']} ID:{q.from_user.id}")
         return
     if d=="LOSS":
         u["losses"]+=1
         lang=u.get("lang","fr")
-        if lang=="en":
-            await q.message.reply_text(f"❌ LOSS Lost - courage!\n\nToo bad but don't give up!\nDon't give up, next one will be winner! 😊\n\nYou also lost? Courage friend!")
-        else:
-            await q.message.reply_text(f"❌ LOSS Perdu - courage!\n\nDommage mais ne pas abandonne!\nNe lâche pas, le prochain sera gagnant! 😊\n\nAh toi aussi tu as perdu? Courage ami!")
-        await notify_admin(context, f"❌ {u['name']} LOSS ID:{q.from_user.id}")
-        return
+        txt = "❌ LOSS - Too bad but don't give up! Next will win! 😊\n\nYou also lost? Courage!" if lang=="en" else "❌ LOSS Perdu - Dommage mais ne pas abandonne! Ne lâche pas, le prochain sera gagnant! 😊\n\nAh toi aussi tu as perdu? Courage ami!"
+        await q.message.reply_text(txt)
+        await notify_admin(context, f"❌ LOSS {u['name']} ID:{q.from_user.id}"); return
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     u=get_user(update.effective_user.id, update.effective_chat.id, update.effective_user.first_name)
-    await notify_admin(context, f"🟢 NOUVEAU: {u['name']} a pris le bot! ID:{update.effective_user.id} @{update.effective_user.username}")
+    await notify_admin(context, f"🟢 NOUVEAU {u['name']} ID:{update.effective_user.id} @{update.effective_user.username}")
     await send_lang_choice(update.effective_chat.id, context)
 
 async def analyse_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -193,26 +161,17 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     txt = update.message.text.lower()
     u=get_user(update.effective_user.id, update.effective_chat.id, update.effective_user.first_name)
     lang=u.get("lang","fr")
-
-    if "mois" in txt or "month" in txt:
-        await notify_admin(context, f"💰 VEUT PAYER MOIS 20$: {u['name']} ID:{update.effective_user.id}")
-        await update.message.reply_text(get_tuto_mois_annee(u["debt"], update.effective_user.id, lang)); return
-    if "ann" in txt or "year" in txt or txt.strip()=="an":
-        await notify_admin(context, f"💰 VEUT PAYER ANNEE 80$: {u['name']} ID:{update.effective_user.id}")
-        await update.message.reply_text(get_tuto_mois_annee(u["debt"], update.effective_user.id, lang)); return
-    if "dette" in txt or "debt" in txt or "bilan" in txt or "balance" in txt or "pay" in txt:
-        await notify_admin(context, f"💰 VEUT PAYER DETTE: {u['name']} ID:{update.effective_user.id} {u['debt']}$")
-        await update.message.reply_text(get_tuto_mois_annee(u["debt"], update.effective_user.id, lang)); return
-    if "lang" in txt:
-        await send_lang_choice(update.effective_chat.id, context); return
-
+    if "mois" in txt or "month" in txt: await notify_admin(context, f"💰 MOIS 20$ {u['name']} ID:{update.effective_user.id}"); await update.message.reply_text(get_tuto_mois_annee(u["debt"], update.effective_user.id, lang)); return
+    if "ann" in txt or "year" in txt or txt.strip()=="an": await notify_admin(context, f"💰 ANNEE 80$ {u['name']} ID:{update.effective_user.id}"); await update.message.reply_text(get_tuto_mois_annee(u["debt"], update.effective_user.id, lang)); return
+    if "dette" in txt or "debt" in txt or "bilan" in txt: await notify_admin(context, f"💰 DETTE {u['name']} ID:{update.effective_user.id} {u['debt']}$"); await update.message.reply_text(get_tuto_mois_annee(u["debt"], update.effective_user.id, lang)); return
+    if "lang" in txt: await send_lang_choice(update.effective_chat.id, context); return
     target=None
-    if any(x in txt for x in ["gold","xau","google","gole","gld","1","or"]): target="GOLD"
+    if any(x in txt for x in ["gold","xau","google","gole","1","or"]): target="GOLD"
     elif any(x in txt for x in ["eur","euro","2"]): target="EURUSD"
-    elif any(x in txt for x in ["gbp","bipy","bp","gu","3","livre"]): target="GBPUSD"
+    elif any(x in txt for x in ["gbp","bipy","bp","gu","3"]): target="GBPUSD"
     if target:
         price = u.get("last_prices",{}).get(target) or get_mt5_prices().get(target)
-        await notify_admin(context, f"📊 {u['name']} a tapé {target} ID:{update.effective_user.id}")
+        await notify_admin(context, f"📊 {u['name']} {target} ID:{update.effective_user.id}")
         await send_detailed_analysis(context, update.effective_chat.id, target, price, lang)
 
 async def pay(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -220,24 +179,24 @@ async def pay(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await notify_admin(context, f"💰 /pay {u['name']} ID:{update.effective_user.id} {u['debt']}$")
     await update.message.reply_text(get_tuto_mois_annee(u['debt'], update.effective_user.id, u.get("lang","fr")))
 
-async def lang_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await send_lang_choice(update.effective_chat.id, context)
+async def lang_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE): await send_lang_choice(update.effective_chat.id, context)
 
 async def addpaid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id!=MY_ADMIN_ID: return
     tid=int(context.args[0]); plan=context.args[1].lower()
     if tid not in users_db: users_db[tid]=get_user(tid, tid, "Client")
-    if plan=="dette" or plan=="debt": users_db[tid]["debt"]=0; users_db[tid]["debt_block"]=False; users_db[tid]["blocked"]=False; users_db[tid]["wins"]=0
-    else:
-        expire=datetime.now()+timedelta(days=30 if plan=="mois" or plan=="month" else 365)
-        users_db[tid]["tier"]="paid"; users_db[tid]["paid_until"]=expire; users_db[tid]["blocked"]=False; users_db[tid]["debt"]=0
-    await update.message.reply_text(f"✅ {tid} {plan} OK")
     lang=users_db[tid].get("lang","fr")
-    try:
-        if lang=="en":
-            await context.bot.send_message(chat_id=users_db[tid]["chat_id"], text="🎉 PAID! Unlocked!\n\nMY BALANCE PAID! Bot unlocked! You can redo 0 WIN\n\nToo bad but don't give up! 😊")
-        else:
-            await context.bot.send_message(chat_id=users_db[tid]["chat_id"], text="🎉 PAYE! Débloqué!\n\nMON BILAN PAYE! Bot débloqué! Tu peux refaire 0 WIN\n\nDommage mais ne pas abandonne! 😊")
+    if plan=="dette" or plan=="debt":
+        users_db[tid]["debt"]=0; users_db[tid]["debt_block"]=False; users_db[tid]["blocked"]=False; users_db[tid]["wins"]=0
+        txt = "🎉 MON BILAN PAYE! Bot débloqué! Tu peux refaire 0 WIN ✅" if lang=="fr" else "🎉 MY BALANCE PAID! Bot unlocked! You can redo 0 WIN ✅"
+    elif plan=="mois" or plan=="month":
+        users_db[tid]["tier"]="paid"; users_db[tid]["paid_until"]=datetime.now()+timedelta(days=30); users_db[tid]["blocked"]=False; users_db[tid]["debt"]=0; users_db[tid]["debt_block"]=False
+        txt = "🎉 PAYE! Débloqué!\n\n✅ Profite de ton abonnement du MOIS! 🚀\n30 jours illimité 24h/24" if lang=="fr" else "🎉 PAID! Unlocked!\n\n✅ Enjoy your MONTH subscription! 🚀\n30 days unlimited 24/7"
+    else:
+        users_db[tid]["tier"]="paid"; users_db[tid]["paid_until"]=datetime.now()+timedelta(days=365); users_db[tid]["blocked"]=False; users_db[tid]["debt"]=0; users_db[tid]["debt_block"]=False
+        txt = "🎉 PAYE! Débloqué!\n\n✅ Profite de ton abonnement de l'ANNEE! 🚀🔥\n365 jours illimité" if lang=="fr" else "🎉 PAID! Unlocked!\n\n✅ Enjoy your YEAR subscription! 🚀🔥\n365 days unlimited"
+    await update.message.reply_text(f"✅ {tid} {plan} OK")
+    try: await context.bot.send_message(chat_id=users_db[tid]["chat_id"], text=txt)
     except: pass
 
 if __name__=="__main__":
@@ -249,5 +208,5 @@ if __name__=="__main__":
     app.add_handler(CommandHandler("addpaid", addpaid))
     app.add_handler(CallbackQueryHandler(button_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-    print("V6 FINAL BILINGUE FR EN + 20 80 + 5H")
+    print("V6 MEME DESIGN FINAL")
     app.run_polling()
