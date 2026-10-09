@@ -1,7 +1,7 @@
 import os, logging, requests, asyncio, random
-from datetime import datetime
+from datetime import datetime, timedelta
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 MY_ADMIN_ID = 8348716806
@@ -11,7 +11,7 @@ users_db = {}
 def get_user(uid, chat_id=None, name=""):
     now = datetime.now()
     if uid not in users_db:
-        users_db[uid] = {"lang":"fr","blocked":False,"chat_id":chat_id,"tier":"free","name":name,"free_start":now,"last_free_reset":now.date(),"notified":False}
+        users_db[uid] = {"lang":"fr","blocked":False,"chat_id":chat_id,"tier":"free","name":name,"free_start":now,"last_free_reset":now.date(),"notified":False,"await_plan":False}
     if chat_id: users_db[uid]["chat_id"]=chat_id
     if name: users_db[uid]["name"]=name
     if users_db[uid]["last_free_reset"]!= now.date() and users_db[uid]["tier"]=="free":
@@ -23,7 +23,12 @@ async def notify_admin(c,t):
     except: pass
 
 def check_free(u):
-    if u.get("tier")=="paid": return True, 999
+    if u.get("tier")=="paid":
+        until = u.get("paid_until")
+        if until and datetime.now() > until:
+            u["tier"]="free"; u["plan"]=None; u["blocked"]=False; u["free_start"]=datetime.now(); u["notified"]=False
+            return True, 300
+        return True, 999
     if u.get("blocked"): return False, 0
     elapsed = (datetime.now() - u.get("free_start", datetime.now())).total_seconds()
     rem = 18000 - elapsed
@@ -57,20 +62,13 @@ async def send_mt5_analysis(context, chat_id, free_mins=None):
         for symbol, price in prices.items():
             is_buy=random.choice([True, False])
             if "XAUUSD" in symbol:
-                if is_buy:
-                    tp1=price*1.003; tp2=price*1.006; sl1=price*0.997; sl2=price*0.994
-                else:
-                    tp1=price*0.997; tp2=price*0.994; sl1=price*1.003; sl2=price*1.006
+                if is_buy: tp1=price*1.003; tp2=price*1.006; sl1=price*0.997; sl2=price*0.994
+                else: tp1=price*0.997; tp2=price*0.994; sl1=price*1.003; sl2=price*1.006
             else:
-                if is_buy:
-                    tp1=price*1.0015; tp2=price*1.003; sl1=price*0.9985; sl2=price*0.997
-                else:
-                    tp1=price*0.9985; tp2=price*0.997; sl1=price*1.0015; sl2=price*1.003
-
+                if is_buy: tp1=price*1.0015; tp2=price*1.003; sl1=price*0.9985; sl2=price*0.997
+                else: tp1=price*0.9985; tp2=price*0.997; sl1=price*1.0015; sl2=price*1.003
             sig="BUY 🟢 ACHAT" if is_buy else "SELL 🔴 VENTE"
-            def fmt(p):
-                return f"{p:.2f}" if "XAU" in symbol else f"{p:.5f}"
-
+            def fmt(p): return f"{p:.2f}" if "XAU" in symbol else f"{p:.5f}"
             msg+=f"━━━━━━━━━━━━━━━\n{'🟢' if is_buy else '🔴'} {symbol}\n📊 SIGNAL: {sig}\n💵 ENTRÉE: {fmt(price)}\n🎯 TP1: {fmt(tp1)} | TP2: {fmt(tp2)}\n🛑 SL1: {fmt(sl1)} | SL2: {fmt(sl2)}\n⚙️ Levier: 1:100 | TF: M15/H1\n\n"
         msg+="💡 Ouvre sur MT5 -> même paire\n⚠️ Risque 1-2%"
         if free_mins is not None and free_mins!=999:
@@ -87,9 +85,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         u["blocked"]=True; u["notified"]=True
         await notify_admin(context, f"🚫 AUTO-BLOCK 5h finies: {u['name']} ID:{update.effective_user.id}")
         await update.message.reply_text("🚫 Tes 5h finies aujourd'hui! Bloqué AUTO.\nTape /pay pour 24h/24\nReset auto demain minuit"); return
-
     lang_msg = MESSAGES[u["lang"]]
-    # EXACT COMME TA CAPTURE
     extra = f"\n\n⏱️ Il te reste {mins} min gratuit aujourd'hui (5h/jour)\nAprès -> /pay pour 24h/24" if u["tier"]=="free" else "\n\n🔥 PAYANT ACTIF 24h/24"
     await update.message.reply_text(lang_msg + extra)
 
@@ -109,26 +105,85 @@ async def lang_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(f"ID: `{update.effective_user.id}`", parse_mode="Markdown")
+
 async def pay(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("💳 PAYANT: 20$/mois ou 80$/an - 24h/24\nEnvoie ton ID au patron WhatsApp")
+    u=get_user(update.effective_user.id, update.effective_chat.id, update.effective_user.first_name)
+    u["await_plan"]=True
+    await update.message.reply_text(
+        "💳 Tu veux payer pour combien? 👇\n\n"
+        "1️⃣ Tape **mois** -> 20$/mois (30 jours)\n"
+        "2️⃣ Tape **an** -> 80$/an (365 jours)\n\n"
+        "Écris juste: mois ou an",
+        parse_mode="Markdown"
+    )
     if update.effective_user.id!=MY_ADMIN_ID:
-        await notify_admin(context, f"💰 /pay VEUT PAYER: {update.effective_user.first_name} ID:{update.effective_user.id}")
+        await notify_admin(context, f"💰 /pay VEUT PAYER: {u.get('name')} ID:{update.effective_user.id}")
+
+# CE QUE TU AS DEMANDÉ DERRICK - J'AJOUTE SEULEMENT ÇA
+async def handle_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message or not update.message.text: return
+    text = update.message.text.lower().strip()
+    u=get_user(update.effective_user.id, update.effective_chat.id, update.effective_user.first_name)
+    if not u.get("await_plan"): return
+
+    if "mois" in text or text=="1" or "month" in text:
+        plan="mois"; label="1 MOIS - 20$"
+        msg_client = (
+            f"✅ Parfait, tu as choisi un mois 20$, okay.\n\n"
+            f"Maintenant envoie ton ID au patron et profite de ton 1 mois d'abonnement 🙏\n\n"
+            f"🆔 Ton ID: `{update.effective_user.id}`\n"
+            f"📲 Tape /myid pour le copier"
+        )
+    elif "an" in text or "année" in text or "annee" in text or text=="2" or "year" in text:
+        plan="an"; label="1 AN - 80$"
+        msg_client = (
+            f"✅ Parfait, tu as choisi un an 80$, okay.\n\n"
+            f"Maintenant envoie ton ID au patron et profite de ton 1 an d'abonnement 🙏\n\n"
+            f"🆔 Ton ID: `{update.effective_user.id}`\n"
+            f"📲 Tape /myid pour le copier"
+        )
+    else:
+        await update.message.reply_text("Tape juste **mois** ou **an** stp 🙏", parse_mode="Markdown")
+        return
+
+    u["await_plan"]=False
+    u["wanted_plan"]=plan
+    await update.message.reply_text(msg_client, parse_mode="Markdown")
+    await notify_admin(context, f"💰 CLIENT A CHOISI {label}\n👤 {u.get('name')} ID:{update.effective_user.id}\n💬 Il a tapé: '{update.message.text}'\n\nPour activer:\n/addpaid {update.effective_user.id} {plan}")
+
 async def addpaid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id!=MY_ADMIN_ID: return
-    if context.args:
-        tid=int(context.args[0]); users_db[tid]["tier"]="paid"; users_db[tid]["blocked"]=False
-        await update.message.reply_text(f"✅ {tid} -> PAYANT 24h/24 🔥")
-        try: await context.bot.send_message(chat_id=users_db[tid]["chat_id"], text="🎉 PAYANT ACTIVÉ 24h/24 🔥")
-        except: pass
+    if len(context.args) < 2:
+        await update.message.reply_text("Usage:\n/addpaid ID mois\n/addpaid ID an\n\nEx: /addpaid 123456789 mois (20$)\n/addpaid 123456789 an (80$)")
+        return
+    tid=int(context.args[0]); plan=context.args[1].lower()
+    if plan == "mois":
+        expire = datetime.now() + timedelta(days=30); label="MOIS (30j - 20$)"
+    elif plan in ["an","annee","année"]:
+        expire = datetime.now() + timedelta(days=365); label="AN (365j - 80$)"
+    else:
+        await update.message.reply_text("Mets 'mois' ou 'an'"); return
+    if tid not in users_db:
+        users_db[tid]={"chat_id":tid,"lang":"fr","blocked":False,"tier":"free","name":"Client","free_start":datetime.now(),"last_free_reset":datetime.now().date(),"notified":False,"await_plan":False}
+    users_db[tid]["tier"]="paid"; users_db[tid]["plan"]=plan; users_db[tid]["paid_until"]=expire; users_db[tid]["blocked"]=False; users_db[tid]["notified"]=False
+    await update.message.reply_text(f"✅ {tid} -> PAYANT {label}\nExpire: {expire.strftime('%d/%m/%Y')}")
+    try:
+        await context.bot.send_message(chat_id=users_db[tid].get("chat_id", tid), text=f"🎉 PAYANT ACTIVÉ 24h/24 🔥\n\n💳 Plan: {label}\n📅 Expire: {expire.strftime('%d/%m/%Y')}\n\nTu reçois les alertes toutes les 3h maintenant!")
+    except: pass
+
 async def block_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id==MY_ADMIN_ID and context.args:
-        users_db[int(context.args[0])]["blocked"]=True; await update.message.reply_text("🚫 BLOQUÉ")
+        tid=int(context.args[0]);
+        if tid in users_db: users_db[tid]["blocked"]=True
+        await update.message.reply_text("🚫 BLOQUÉ")
+
 async def unblock_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id==MY_ADMIN_ID and context.args:
-        tid=int(context.args[0]); users_db[tid]["blocked"]=False; users_db[tid]["free_start"]=datetime.now(); users_db[tid]["notified"]=False
+        tid=int(context.args[0])
+        if tid in users_db:
+            users_db[tid]["blocked"]=False; users_db[tid]["free_start"]=datetime.now(); users_db[tid]["notified"]=False
         await update.message.reply_text(f"✅ {tid} DÉBLOQUÉ")
 
-# AUTO TOUTES LES 3H - COMME TU VEUX
 async def job_auto(c):
     for uid,d in list(users_db.items()):
         if not d.get("blocked") and d.get("chat_id"):
@@ -150,6 +205,7 @@ if __name__=="__main__":
     app.add_handler(CommandHandler("addpaid", addpaid))
     app.add_handler(CommandHandler("block", block_cmd))
     app.add_handler(CommandHandler("unblock", unblock_cmd))
-    app.job_queue.run_repeating(job_auto, interval=10800, first=30) # 3h AUTO
-    print("V6.8 MT5 FINAL LANCE")
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_choice))
+    app.job_queue.run_repeating(job_auto, interval=10800, first=30)
+    print("V7.2 MT5 FINAL AVEC CHOIX MOIS/AN LANCE")
     app.run_polling()
