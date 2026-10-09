@@ -210,3 +210,33 @@ if __name__=="__main__":
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
     print("V6 MEME DESIGN FINAL")
     app.run_polling()
+⛔ BOT ARRÊTÉ
+Bilan: 7,5$ à payer
+Tape /pay + ID au patron
+❌ LOSS Perdu
+Dommage mais ne pas abandonne!
+Ne lâche pas, le prochain sera gagnant! 😊
+Too bad but don't give up!
+Don't give up, next one will be winner! 😊
+# ... (même code que avant mais corrigé dans button_handler WIN)
+
+    if d=="WIN":
+        u["wins"]+=1; u["debt"]=round(u["debt"]+1.5,2)
+        await q.message.reply_text(f"✅ WIN! Bilan: {u['debt']}$ | {u['wins']}W/{u['losses']}L")
+        await notify_admin(context, f"🔔 WIN {u['name']} ID:{q.from_user.id} DOIT:{u['debt']}$")
+        if u["debt"]>=7.5:
+            u["debt_block"]=True; u["blocked"]=True
+            lang=u.get("lang","fr")
+            # CORRIGE: PLUS DE "DOMMAGE" ICI!
+            txt = f"⛔ BOT STOPPED AUTO ⛔\n\nBalance: {u['debt']}$ (5 WIN x 1,5$)\nType /pay + send ID {q.from_user.id} to boss to pay\n\nID: {q.from_user.id}" if lang=="en" else f"⛔ BOT ARRETE AUTO ⛔\n\nBilan: {u['debt']}$ (5 WIN x 1,5$)\nTape /pay + envoie ID {q.from_user.id} au patron pour payer\n\nID: {q.from_user.id}"
+            await context.bot.send_message(chat_id=q.message.chat_id, text=txt)
+            await notify_admin(context, f"🚨 BLOQUE 7,5$ {u['name']} ID:{q.from_user.id}")
+        return
+    if d=="LOSS":
+        u["losses"]+=1
+        lang=u.get("lang","fr")
+        # DOMMAGE SEULEMENT ICI POUR LOSS!
+        txt = "❌ LOSS - Too bad but don't give up!\nDon't give up, next one will be winner! 😊" if lang=="en" else "❌ Perdu - Dommage mais ne pas abandonne!\nNe lâche pas, le prochain sera gagnant! 😊"
+        await q.message.reply_text(txt)
+        return
+        
