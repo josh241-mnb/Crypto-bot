@@ -301,6 +301,57 @@ async def addpaid(update: Update, context: ContextTypes.DEFAULT_TYPE):
 if __name__=="__main__":
     app=Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
+    async def addpaid(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id!=MY_ADMIN_ID: return
+    if len(context.args)<2:
+        await update.message.reply_text("Usage: /addpaid ID dettes/an/mois"); return
+
+    tid=int(context.args[0])
+    plan=context.args[1].lower().strip()
+
+    if tid not in users_db:
+        users_db[tid]=get_user(tid, tid, "Client")
+
+    lang=users_db[tid].get("lang","fr")
+
+    # === DETTES : dettes / dette / debt / debts / bilan ===
+    if plan in ["dette","dettes","debt","debts","dete","bilan"]:
+        users_db[tid]["debt"]=0
+        users_db[tid]["debt_block"]=False
+        users_db[tid]["blocked"]=False
+        users_db[tid]["wins"]=0
+        users_db[tid]["free_start"]=datetime.now() # reset les 5h
+        txt = "🎉 MON BILAN PAYE! Bot débloqué! Tu peux refaire 0 WIN ✅\n⏱️ 5h gratuit à nouveau" if lang!="en" else "🎉 MY BALANCE PAID! Bot unlocked! You can redo 0 WIN ✅\n⏱️ 5h free again"
+
+    # === MOIS : mois / mois / month ===
+    elif plan in ["mois","mois","month","m"]:
+        users_db[tid]["tier"]="paid"
+        users_db[tid]["paid_until"]=datetime.now()+timedelta(days=30)
+        users_db[tid]["blocked"]=False
+        users_db[tid]["debt"]=0
+        users_db[tid]["debt_block"]=False
+        users_db[tid]["wins"]=0
+        txt = "🎉 PAYE! Débloqué!\n\n✅ Profite de ton abonnement du MOIS! 🚀\n30 jours illimité 24h/24\nTous les signaux GOLD / EURUSD / GBPUSD" if lang!="en" else "🎉 PAID! Unlocked!\n\n✅ Enjoy your MONTH subscription! 🚀\n30 days unlimited 24/7"
+
+    # === ANNEE : an / annee / année / year / ans ===
+    elif plan in ["an","annee","année","year","ans","anne","a"]:
+        users_db[tid]["tier"]="paid"
+        users_db[tid]["paid_until"]=datetime.now()+timedelta(days=365)
+        users_db[tid]["blocked"]=False
+        users_db[tid]["debt"]=0
+        users_db[tid]["debt_block"]=False
+        users_db[tid]["wins"]=0
+        txt = "🎉 PAYE! Débloqué!\n\n✅ Profite de ton abonnement de l'ANNEE! 🚀🔥\n365 jours illimité 24h/24\nVIP + Tous les signaux + Support" if lang!="en" else "🎉 PAID! Unlocked!\n\n✅ Enjoy your YEAR subscription! 🚀🔥\n365 days unlimited 24/7\nVIP + All signals"
+
+    else:
+        await update.message.reply_text(f"❌ Plan inconnu: {plan}\nUtilise: dettes / an / mois")
+        return
+
+    await update.message.reply_text(f"✅ {tid} {plan} OK - DEBLOQUE")
+    try:
+        await context.bot.send_message(chat_id=users_db[tid]["chat_id"], text=txt)
+    except:
+        pass
     app.add_handler(CommandHandler("analyse", analyse_cmd))
     app.add_handler(CommandHandler("pay", pay))
     app.add_handler(CommandHandler("lang", lang_cmd))
